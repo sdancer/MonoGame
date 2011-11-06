@@ -38,26 +38,82 @@ purpose and non-infringement.
 */
 #endregion License
 
-using System;
+﻿using System;
 
 namespace Microsoft.Xna.Framework.Input
-{
-    public static class Mouse
+{    
+    public struct MouseState
     {
-		private static int _x, _y;
-
-        public static IntPtr WindowHandle { get; set; }
-
-        public static MouseState GetState()
+		int _x,_y;
+        private ButtonState _leftButton;
+		
+		internal MouseState(int x, int y, ButtonState leftButton)
+		{
+			_x = x;
+			_y=y;
+		    _leftButton = leftButton;
+		}
+		
+        public int X
         {
-            return new MouseState(_x,_y);
+            get
+            {
+                return _x;
+            }
+			           
+        }
+        public int Y
+        {
+            get
+            {
+                return _y;
+            }
         }
 		
-		public static void SetPosition(int x, int y)
-        {
-			_x = x;
-			_y = y;
-        }
+		public ButtonState LeftButton 
+		{ 
+			get { return _leftButton; }
+		}
+		
+		public ButtonState MiddleButton 
+		{ 
+			get
+			{
+				return ButtonState.Released;
+			}
+		}
+		
+		public ButtonState RightButton 
+		{ 
+			get
+			{
+				return ButtonState.Released;
+			}
+		}
+		
+		public int ScrollWheelValue 
+		{ 
+			get
+			{
+				return 0;
+			}
+		}
+		
+		public ButtonState XButton1
+		{ 
+			get
+			{
+				return ButtonState.Released;
+			}
+		}
+		
+		public ButtonState XButton2
+		{ 
+			get
+			{
+				return ButtonState.Released;
+			}
+		}
     }
 }
 

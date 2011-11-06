@@ -259,6 +259,7 @@ namespace Microsoft.Xna.Framework
             }
             if (e.Action == MotionEventActions.Up) {
                 state = TouchLocationState.Released;
+                Mouse.LeftButton = ButtonState.Released;
             }
             if (e.Action == MotionEventActions.Move) {
                 state = TouchLocationState.Moved;
@@ -267,6 +268,7 @@ namespace Microsoft.Xna.Framework
             if (e.Action == MotionEventActions.Down) {
                 state = TouchLocationState.Pressed;
                 Mouse.SetPosition((int) e.GetX(), (int) e.GetY());
+                Mouse.LeftButton = ButtonState.Pressed;
             }
 
             TouchLocation tprevious;

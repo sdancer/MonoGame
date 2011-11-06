@@ -45,12 +45,18 @@ namespace Microsoft.Xna.Framework.Input
     public static class Mouse
     {
 		private static int _x, _y;
+        private static ButtonState _leftButton = ButtonState.Released;
+
+        internal static ButtonState LeftButton
+        {
+            set { _leftButton = value; }
+        }
 
         public static IntPtr WindowHandle { get; set; }
 
         public static MouseState GetState()
         {
-            return new MouseState(_x,_y);
+            return new MouseState(_x,_y, _leftButton);
         }
 		
 		public static void SetPosition(int x, int y)

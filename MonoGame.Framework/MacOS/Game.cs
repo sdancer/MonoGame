@@ -74,7 +74,7 @@ namespace Microsoft.Xna.Framework
 		private GameComponentCollection _gameComponentCollection;
 		public GameServiceContainer _services;
 		private ContentManager _content;
-		private GameWindow _view;
+		private GameWindow _gameWindow;
 		private bool _isFixedTimeStep = true;
 		private TimeSpan _targetElapsedTime = TimeSpan.FromSeconds (1 / FramesPerSecond); 
 		private IGraphicsDeviceManager _graphicsDeviceManager;
@@ -107,20 +107,46 @@ namespace Microsoft.Xna.Framework
 
 			// Perform any other window configuration you desire
 			_mainWindow.IsOpaque = true;
+			_mainWindow.EnableCursorRects();
+			_gameWindow = new GameWindow (frame);
+			_gameWindow.game = this;
 
-			_view = new GameWindow (frame);
-			_view.game = this;
-			
-			_mainWindow.ContentView.AddSubview (_view);
+			_mainWindow.ContentView.AddSubview (_gameWindow);
 			_mainWindow.AcceptsMouseMovedEvents = false;
-
+			_mainWindow.Center();
 			// Initialize GameTime
 			_updateGameTime = new GameTime ();
-			_drawGameTime = new GameTime ();  
-			
+			_drawGameTime = new GameTime ();
+
 			//Set the current directory.
 			// We set the current directory to the ResourcePath on Mac
 			Directory.SetCurrentDirectory(NSBundle.MainBundle.ResourcePath);
+
+			// Leave these here for when we implement the Activate and Deactivated
+			_mainWindow.DidBecomeKey += delegate(object sender, EventArgs e) {
+				//if (!IsMouseVisible)
+				//	_gameWindow.HideCursor();
+				//Console.WriteLine("BecomeKey");
+			};
+
+			_mainWindow.DidResignKey += delegate(object sender, EventArgs e) {
+				//if (!IsMouseVisible)
+				//	_gameWindow.UnHideCursor();
+				//Console.WriteLine("ResignKey");
+			};
+
+			_mainWindow.DidBecomeMain += delegate(object sender, EventArgs e) {
+				//if (!IsMouseVisible)
+					//_gameWindow.HideCursor();
+				////Console.WriteLine("BecomeMain");
+			};
+
+			_mainWindow.DidResignMain += delegate(object sender, EventArgs e) {
+				//if (!IsMouseVisible)
+				//	_gameWindow.UnHideCursor();
+				//Console.WriteLine("ResignMain");
+			};
+
 		}
 
 		void Handle_gameComponentCollectionComponentAdded (object sender, GameComponentCollectionEventArgs e)
@@ -256,10 +282,7 @@ namespace Microsoft.Xna.Framework
 			}
 			set {
 				_mouseVisible = value;
-				if (_mouseVisible) {
-					NSCursor.Unhide();
-				}
-			}
+				_mainWindow.InvalidateCursorRectsForView(_gameWindow);			}
 		}
 
 		public TimeSpan TargetElapsedTime {
@@ -267,10 +290,16 @@ namespace Microsoft.Xna.Framework
 				return _targetElapsedTime;
 			}
 			set {
-				_targetElapsedTime = value;			
-				if (_initialized) {
-					throw new NotSupportedException ();
-				}
+				// http://msdn.microsoft.com/en-us/library/microsoft.xna.framework.game.targetelapsedtime.aspx
+				// the check here would be for a value that is a positive non zeo value.
+				// Not supported does not make sense.
+//				_targetElapsedTime = value;
+//				if (_initialized) {
+//					throw new NotSupportedException ();
+//				}
+				if (value <= TimeSpan.Zero)
+					throw new ArgumentOutOfRangeException("value must be positive and non zero.");
+				_targetElapsedTime = value;
 			}
 		}
 		
@@ -302,8 +331,10 @@ namespace Microsoft.Xna.Framework
 
 			if (GraphicsDevice.PresentationParameters.IsFullScreen)
 				GoFullScreen();
-			else
+			else {
+				_wasResizeable = IsAllowUserResizing;
 				GoWindowed();
+			}
 
 			_initializing = true;
 
@@ -330,7 +361,7 @@ namespace Microsoft.Xna.Framework
 			
 			Initialize ();
 
-			_view.Run (FramesPerSecond / (FramesPerSecond * TargetElapsedTime.TotalSeconds));
+			_gameWindow.Run (FramesPerSecond / (FramesPerSecond * TargetElapsedTime.TotalSeconds));
 			_mainWindow.MakeKeyAndOrderFront (_mainWindow);
 		}
 
@@ -368,7 +399,7 @@ namespace Microsoft.Xna.Framework
 
 		public GameWindow Window {
 			get {
-				return _view;
+				return _gameWindow;
 			}
 		}
 
@@ -484,7 +515,7 @@ namespace Microsoft.Xna.Framework
 				frame = NSScreen.MainScreen.Frame;
 				content = NSScreen.MainScreen.Frame;
 			} else {
-				content = _view.Bounds;
+				content = _gameWindow.Bounds;
 				content.Width = Math.Min(
 				                    graphicsDeviceManager.PreferredBackBufferWidth,
 				                    NSScreen.MainScreen.VisibleFrame.Width);
@@ -498,10 +529,10 @@ namespace Microsoft.Xna.Framework
 				frame.Width = content.Width;
 				frame.Height = content.Height + TitleBarHeight();
 			}
-			//_mainWindow.SetFrame (frame, true);
+			_mainWindow.SetFrame (frame, true);
 			
-			_view.Bounds = content;
-			_view.Size = content.Size.ToSize();
+			_gameWindow.Bounds = content;
+			_gameWindow.Size = content.Size.ToSize();
 		}
 
 		internal void GoWindowed ()
@@ -512,31 +543,32 @@ namespace Microsoft.Xna.Framework
 			//so temporarily become inactive so it won't execute.
 			bool wasActive = IsActive;
 			IsActive = false;
-			
-			//Changing window style resets the title. Save it.
-			string oldTitle = _view.Title;
-			
-//			NSMenu.MenuBarVisible = true;
-//			_mainWindow.StyleMask = NSWindowStyle.Titled | NSWindowStyle.Closable;
-//			if (_wasResizeable) _mainWindow.StyleMask |= NSWindowStyle.Resizable;
-//			_mainWindow.HidesOnDeactivate = false;
-			NSCursor.Unhide();
 
-			//ResetWindowBounds();
-			_mainWindow.ContentView.ExitFullscreenModeWithOptions(new NSDictionary());
+			// I will leave this here just in case someone can figure out how to do
+			//  a full screen with this and still get Alt + Tab to friggin work.
+//			_mainWindow.ContentView.ExitFullscreenModeWithOptions(new NSDictionary());
+
+			//Changing window style resets the title. Save it.
+			string oldTitle = _gameWindow.Title;
+			
+			NSMenu.MenuBarVisible = true;
+			_mainWindow.StyleMask = NSWindowStyle.Titled | NSWindowStyle.Closable;
+			if (_wasResizeable) _mainWindow.StyleMask |= NSWindowStyle.Resizable;
 
 			if (oldTitle != null)
-				_view.Title = oldTitle;
-			
-			IsActive = wasActive;
+				_gameWindow.Title = oldTitle;
+
+
+			// Set the level here to normal
+			_mainWindow.Level = NSWindowLevel.Normal;
 
 			Window.Window.IsVisible = false;
 			Window.Window.MakeKeyAndOrderFront(Window);
 			ResetWindowBounds();
+			_mainWindow.HidesOnDeactivate = false;
+			Mouse.ResetMouse();
 
-			//if (!IsMouseVisible) {
-			//	NSCursor.Hide();
-			//}
+			IsActive = wasActive;
 		}
 		
 		internal void GoFullScreen ()
@@ -545,48 +577,31 @@ namespace Microsoft.Xna.Framework
 			bool wasActive = IsActive;
 			IsActive = false;
 
-			_mainWindow.ContentView.EnterFullscreenModeWithOptions(NSScreen.MainScreen,new NSDictionary());
-
-			//Some games set fullscreen in their initialize function,
-			//before we have sized the window and set it active.
-			//Do that now, or else mouse tracking breaks.
-//			_mainWindow.MakeKeyAndOrderFront(_mainWindow);
-//			ResetWindowBounds();
+			// I will leave this here just in case someone can figure out how to do
+			//  a full screen with this and still get Alt + Tab to friggin work.
+			//_mainWindow.ContentView.EnterFullscreenModeWithOptions(NSScreen.MainScreen,new NSDictionary());
 
 			_wasResizeable = IsAllowUserResizing;
 
-			string oldTitle = _view.Title;
+			string oldTitle = _gameWindow.Title;
 
-//			NSMenu.MenuBarVisible = false;
-//			_mainWindow.StyleMask = NSWindowStyle.Borderless;
-//			_mainWindow.HidesOnDeactivate = true;
+			NSMenu.MenuBarVisible = false;
+			_mainWindow.StyleMask = NSWindowStyle.Borderless;
 
-			//Console.WriteLine("Before windows reset");
-
-//			ResetWindowBounds();
-			//Console.WriteLine("After windows reset");
-
+			// Set the level here to normal
+			_mainWindow.Level = NSWindowLevel.Floating;
 
 			if (oldTitle != null)
-				_view.Title = oldTitle;
-
-			if (!IsMouseVisible) {
-				NSCursor.Hide();
-			}
-
-			IsActive = wasActive;
+				_gameWindow.Title = oldTitle;
 
 			Window.Window.IsVisible = false;
 			Window.Window.MakeKeyAndOrderFront(Window);
 			ResetWindowBounds();
-			//_mainWindow.MakeKeyAndOrderFront(_mainWindow);
-			//_mainWindow.MakeKeyWindow();
-//						_mainWindow.MakeKeyWindow();
-//			_mainWindow.MakeFirstResponder(_mainWindow);
-			//_mainWindow.ContentView.
+			_mainWindow.HidesOnDeactivate = true;
+			Window.Window.HidesOnDeactivate = true;
+			Mouse.ResetMouse();
 
-			//_mainWindow.ContentView.MouseDown(NSEvent.MouseEvent(NSEventType.LeftMouseDown, new PointF(0,0),
-			//	(NSEventModifierMask)0,0,0,_mainWindow.GraphicsContext,0,0,0.0f));
+			IsActive = wasActive;
 		}
 		
 		protected virtual void Initialize ()
@@ -635,15 +650,15 @@ namespace Microsoft.Xna.Framework
 					var gc = (GameComponent)_gameComponentCollection[x];
 					// We may be drawing on a secondary thread through the display link or timer thread.
 					// Add a mutex around to avoid the threads accessing the context simultaneously
-					_view.OpenGLContext.CGLContext.Lock ();
+					_gameWindow.OpenGLContext.CGLContext.Lock ();
 
 					// set our current context
-					_view.MakeCurrent ();
+					_gameWindow.MakeCurrent ();
 
 					gc.Initialize ();
 
 					// now unlock it
-					_view.OpenGLContext.CGLContext.Unlock ();
+					_gameWindow.OpenGLContext.CGLContext.Unlock ();
 					_gameComponentsToInitialize.Remove(gc);
 				}				
 			}							

@@ -91,6 +91,10 @@ namespace Microsoft.Xna.Framework.Graphics
 				return new Rectangle (0,0,texture.ImageWidth, texture.ImageHeight);
 			}
 		}
+
+        protected internal Texture2D()
+        {
+        }
 		
 		internal Texture2D(ESImage theImage)
 		{

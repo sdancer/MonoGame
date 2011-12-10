@@ -15,9 +15,8 @@
     <AndroidSupportedAbis>armeabi</AndroidSupportedAbis>
     <AndroidStoreUncompressedFileExtensions />
     <MandroidI18n />
-    <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <AndroidApplication>True</AndroidApplication>
-    <DeployExternal>false</DeployExternal>
+    <DeployExternal>False</DeployExternal>
     <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -338,8 +337,5 @@
       <Project>{565129E0-4EE5-4F6F-B403-C3484C9740BE}</Project>
       <Name>Lidgren.Network.Android</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\AndroidManifest.xml" />
   </ItemGroup>
 </Project>

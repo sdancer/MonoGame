@@ -54,8 +54,8 @@ using OpenTK.Platform.Android;
 using OpenTK;
 using OpenTK.Platform;
 using OpenTK.Graphics;
-using OpenTK.Graphics.ES11;
-using OpenTK.Graphics.ES20;
+//using OpenTK.Graphics.ES11;
+//using OpenTK.Graphics.ES20;
 
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
@@ -63,23 +63,22 @@ using Microsoft.Xna.Framework.Input.Touch;
 
 namespace Microsoft.Xna.Framework
 {
-    public class AndroidGameWindow : AndroidGameView
+    public class AndroidGameWindow : AndroidGameView , Android.Views.View.IOnTouchListener
     {
 		private Rectangle clientBounds;
-		internal Game game;
+		private Game _game;
 		private GameTime _updateGameTime;
         private GameTime _drawGameTime;
         private DateTime _lastUpdate;
 		private DateTime _now;
         private DisplayOrientation _currentOrientation;
+		private GestureDetector gesture = null;
 
-        public AndroidGameWindow(Context context) :base(context)
+        public AndroidGameWindow(Context context, Game game) : base(context)
         {
-          
-            Initialize();
-				
-        }
-		
+            _game = game;
+            Initialize();							
+        }		
 						
         private void Initialize()
         {
@@ -93,17 +92,20 @@ namespace Microsoft.Xna.Framework
 
             // Initialize _lastUpdate
             _lastUpdate = DateTime.Now;
-												
+					
+			gesture = new GestureDetector(new GestureListener((AndroidGameActivity)this.Context));
 			
             this.RequestFocus();
             this.FocusableInTouchMode = true;
+
+            this.SetOnTouchListener(this);
         }
 		
 		void GameWindow_Closed(object sender,EventArgs e)
         {        
 			try
 			{
-        		game.Exit();
+        		_game.Exit();
 			}
 			catch(NullReferenceException)
 			{
@@ -115,7 +117,7 @@ namespace Microsoft.Xna.Framework
         {
             Keyboard.KeyDown(keyCode);
             // we need to handle the Back key here because it doesnt work any other way
-            if (keyCode == Keycode.Back) game.Exit();
+            if (keyCode == Keycode.Back) _game.Exit();
             return true;
         }
 
@@ -132,18 +134,22 @@ namespace Microsoft.Xna.Framework
 		
 		protected override void CreateFrameBuffer()
 		{	    
+#if !GL20			
 			try
             {
-                // TODO  this.GLContextVersion = GLContextVersion.Gles2_0;
-                GLContextVersion = GLContextVersion.Gles1_1;
+                GLContextVersion = GLContextVersion.Gles2_0;
+                GraphicsDevice.OpenGLESVersion = GLContextVersion;
 				base.CreateFrameBuffer();
 		    } 
 			catch (Exception) 
+#endif			
 			{
 		        //device doesn't support OpenGLES 2.0; retry with 1.1:
                 GLContextVersion = GLContextVersion.Gles1_1;
+                GraphicsDevice.OpenGLESVersion = GLContextVersion;
 				base.CreateFrameBuffer();
 		    }
+			
 		}
 	
 
@@ -160,10 +166,10 @@ namespace Microsoft.Xna.Framework
             if (!GraphicsContext.IsCurrent)
                 MakeCurrent();
 
-            if (game != null) {
+            if (_game != null) {
                 _drawGameTime.Update(_now - _lastUpdate);
                 _lastUpdate = _now;
-                game.DoDraw(_drawGameTime);
+                _game.DoDraw(_drawGameTime);
             }
             try
             {
@@ -179,13 +185,13 @@ namespace Microsoft.Xna.Framework
 		{			
 			base.OnUpdateFrame(e);
 			
-			if (game != null )
+			if (_game != null )
 			{
                 //ObserveDeviceRotation();
 
 				_now = DateTime.Now;
 				_updateGameTime.Update(_now - _lastUpdate);
-            	game.DoUpdate(_updateGameTime);
+            	_game.DoUpdate(_updateGameTime);
 			}
 		}
 		
@@ -195,11 +201,12 @@ namespace Microsoft.Xna.Framework
 
         internal void SetOrientation(DisplayOrientation currentorientation)
         {
-            if (game.graphicsDeviceManager == null)
+            var deviceManager = (IGraphicsDeviceManager)_game.Services.GetService(typeof(IGraphicsDeviceManager));
+            if (deviceManager == null)
                 return;
 
             // Calculate supported orientations if it has been left as "default" and only default
-            DisplayOrientation supportedOrientations = (game.graphicsDeviceManager as GraphicsDeviceManager).SupportedOrientations;			
+            DisplayOrientation supportedOrientations = (deviceManager as GraphicsDeviceManager).SupportedOrientations;			
 			var allowedOrientation = DisplayOrientation.LandscapeLeft; 				
 			if ((supportedOrientations == DisplayOrientation.Default))
 			{
@@ -243,8 +250,21 @@ namespace Microsoft.Xna.Framework
 			// decide of we honour the device orientation or force our own
 			
 			// so if we are in Portrait but we allow only LandScape we stay in landscape
-						
-
+			if (allowedOrientation == DisplayOrientation.Portrait)
+			{
+				actualOrientation = DisplayOrientation.Portrait;
+			}
+			else
+			if (allowedOrientation == DisplayOrientation.LandscapeLeft)
+			{
+				actualOrientation = DisplayOrientation.LandscapeLeft;
+			}
+			else
+			if (allowedOrientation == DisplayOrientation.LandscapeRight)
+			{
+				actualOrientation = DisplayOrientation.LandscapeRight;
+			}	
+			
             switch (currentorientation) {
 
 			case DisplayOrientation.Portrait:
@@ -255,76 +275,99 @@ namespace Microsoft.Xna.Framework
 				case DisplayOrientation.LandscapeRight:	
 				    if ((allowedOrientation & DisplayOrientation.LandscapeRight) != 0) {
                         actualOrientation = DisplayOrientation.LandscapeRight;
-                    }
+                    }				    
 				    break;
                 case DisplayOrientation.LandscapeLeft:				     
                 default:
-				    actualOrientation = DisplayOrientation.LandscapeLeft;
+					if ((allowedOrientation & DisplayOrientation.LandscapeLeft) != 0) {
+				    	actualOrientation = DisplayOrientation.LandscapeLeft;
+					}
                     break;
             }
 			
+			
 			CurrentOrientation = actualOrientation;
-            game.GraphicsDevice.PresentationParameters.DisplayOrientation = actualOrientation;
+            _game.GraphicsDevice.PresentationParameters.DisplayOrientation = actualOrientation;
             TouchPanel.DisplayOrientation = actualOrientation;
         }
 
         private Dictionary<IntPtr, TouchLocation> _previousTouches = new Dictionary<IntPtr, TouchLocation>();
 
-        public override bool OnTouchEvent(MotionEvent e)
+		#region IOnTouchListener implementation
+		public bool OnTouch (View v, MotionEvent e)
         {
-            TouchLocationState state = TouchLocationState.Invalid;
-
-            if (e.Action == MotionEventActions.Cancel) {
-                state = TouchLocationState.Invalid;
+			return OnTouchEvent(e);
             }
-            if (e.Action == MotionEventActions.Up) {
-                state = TouchLocationState.Released;
-                Mouse.LeftButton = ButtonState.Released;
+		#endregion
+		
+		internal void UpdateTouchPosition(ref Vector2 position)
+		{
+			if (this._game.Window.CurrentOrientation == DisplayOrientation.LandscapeRight)
+			{
+				// we need to fudge the position
+				position.X = this.Width - position.X;
+				position.Y = this.Height - position.Y;
             }
-            if (e.Action == MotionEventActions.Move) {
-                state = TouchLocationState.Moved;
-                Mouse.SetPosition((int) e.GetX(), (int) e.GetY());
-            }
-            if (e.Action == MotionEventActions.Down) {
-                state = TouchLocationState.Pressed;
-                Mouse.SetPosition((int) e.GetX(), (int) e.GetY());
-                Mouse.LeftButton = ButtonState.Pressed;
+			Android.Util.Log.Info("MonoGameInfo", String.Format("Touch {0}x{1}", position.X, position.Y));
             }
 
-            TouchLocation tprevious;
+        public override bool OnTouchEvent(MotionEvent e)
+        {			
             TouchLocation tlocation;
-            Vector2 position = new Vector2(e.GetX(), e.GetY());
-            Vector2 translatedPosition = position;
-			
-            switch (CurrentOrientation) {
-                case DisplayOrientation.Portrait: 
-				case DisplayOrientation.LandscapeLeft: 
+            TouchCollection collection = TouchPanel.Collection;            
+            Vector2 position = Vector2.Zero;            
+            position.X = e.GetX(e.ActionIndex);            
+            position.Y = e.GetY(e.ActionIndex);     
+			UpdateTouchPosition(ref position);
+			int id = e.GetPointerId(e.ActionIndex);            
+            int index;            
+            switch (e.ActionMasked)            
+            {                
+                // DOWN                
+                case 0:                
+                case 5:                    
+                    tlocation = new TouchLocation(id, TouchLocationState.Pressed, position);                    
+                    collection.Add(tlocation);                    
                     break;
-                case DisplayOrientation.LandscapeRight: 
-                    translatedPosition = new Vector2(ClientBounds.Width - position.X, ClientBounds.Height - position.Y);
-                    break;                                  
-                //case DisplayOrientation.PortraitUpsideDown:
-                 //   translatedPosition = new Vector2(ClientBounds.Width - position.X, ClientBounds.Height - position.Y);
+                // UP                
+                case 1:                
+                case 6:                    
+                    index = collection.FindById(e.GetPointerId(e.ActionIndex), out tlocation);                    
+                    if (index >= 0)                    
+                    {                        
+                        tlocation.State = TouchLocationState.Released;                        
+                        collection[index] = tlocation;                    
+                    }                    
                     break;
+                // MOVE                
+                case 2:                    
+                    for (int i = 0; i < e.PointerCount; i++)                    
+                    {                        
+                        id = e.GetPointerId(i);                        
+                        position.X = e.GetX(i);                        
+                        position.Y = e.GetY(i);  
+					    UpdateTouchPosition(ref position);
+                        index = collection.FindById(id, out tlocation);                        
+                        if (index >= 0)                        
+                        {                            
+                            tlocation.State = TouchLocationState.Moved;                            
+                            tlocation.Position = position;                            
+                            collection[index] = tlocation;                        
             }
-
-
-            if (state != TouchLocationState.Pressed && _previousTouches.TryGetValue(e.Handle, out tprevious)) {
-                tlocation = new TouchLocation(e.Handle.ToInt32(), state, translatedPosition, e.Pressure, tprevious.State, tprevious.Position, tprevious.Pressure);
             }
-            else {
-                tlocation = new TouchLocation(e.Handle.ToInt32(), state, translatedPosition, e.Pressure);
+                    break;                
+                // CANCEL, OUTSIDE                
+                case 3:                
+                case 4:                    
+                    index = collection.FindById(id, out tlocation);                    
+                    if (index >= 0)                    
+                    {                        
+                        tlocation.State = TouchLocationState.Invalid;                        
+                        collection[index] = tlocation;                    
+                    }                    
+                    break;            
             }
-
-            TouchPanel.Collection.Clear();
-            TouchPanel.Collection.Add(tlocation);
-
-            if (state != TouchLocationState.Released)
-                _previousTouches[e.Handle] = tlocation;
-            else
-                _previousTouches.Remove(e.Handle);
-
-            GamePad.Instance.Update(e);
+			if (gesture != null) gesture.OnTouchEvent(e);
 
             return true;
         }
@@ -371,9 +414,9 @@ namespace Microsoft.Xna.Framework
                     _currentOrientation = value;
 
                     if (_currentOrientation == DisplayOrientation.Portrait || _currentOrientation == DisplayOrientation.PortraitUpsideDown)
-                        Game.contextInstance.SetRequestedOrientation(ScreenOrientation.Portrait);
+                        Game.Activity.SetRequestedOrientation(ScreenOrientation.Portrait);
                     else if (_currentOrientation == DisplayOrientation.LandscapeLeft || _currentOrientation == DisplayOrientation.LandscapeRight)
-                        Game.contextInstance.SetRequestedOrientation(ScreenOrientation.Landscape);
+                        Game.Activity.SetRequestedOrientation(ScreenOrientation.Landscape);
 
                     if (OrientationChanged != null)
                     {
@@ -386,6 +429,7 @@ namespace Microsoft.Xna.Framework
         public event EventHandler<EventArgs> OrientationChanged;
 		public event EventHandler ClientSizeChanged;
 		public event EventHandler ScreenDeviceNameChanged;
+
     }
 }
 

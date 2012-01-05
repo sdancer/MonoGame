@@ -196,7 +196,6 @@
     <Compile Include="MacOS\Graphics\SpriteBatcher.cs" />
     <Compile Include="Graphics\SpriteBatchItem.cs" />
     <Compile Include="Graphics\SpriteEffects.cs" />
-    <Compile Include="MacOS\Game.cs" />
     <Compile Include="GameComponent.cs" />
     <Compile Include="DrawableGameComponent.cs" />
     <Compile Include="Audio\InstancePlayLimitException.cs" />
@@ -332,6 +331,7 @@
     <Compile Include="Graphics\Effect\EffectHelpers.cs" />
     <Compile Include="Content\LzxDecoder.cs" />
     <Compile Include="Content\ContentManager.cs" />
+    <Compile Include="MacOS\Content\ContentManager.cs" />
     <Compile Include="MacOS\Media\VideoPlayer.cs" />
     <Compile Include="MacOS\MacGameNSWindow.cs" />
     <Compile Include="Content\ContentReaders\CurveReader.cs" />
@@ -341,6 +341,13 @@
     <Compile Include="MacOS\Graphics\Effect\BasicEffect.cs" />
     <Compile Include="MacOS\Graphics\Effect\PSBasicEffect.cs" />
     <Compile Include="MacOS\Graphics\Effect\VSBasicEffectcs" />
+    <Compile Include="Graphics\Vertices\VertexElementColor.cs" />
+    <Compile Include="Graphics\Vertices\IndexElementSize.cs" />
+    <Compile Include="Audio\XactSound.cs" />
+    <Compile Include="Audio\XactClip.cs" />
+    <Compile Include="Game.cs" />
+    <Compile Include="GamePlatform.cs" />
+    <Compile Include="MacOS\MacGamePlatform.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="MacOS\" />
@@ -353,7 +360,6 @@
     <Folder Include="MacOS\Audio\" />
     <Folder Include="Media\" />
     <Folder Include="MacOS\Content\" />
-    <Folder Include="MacOS\Graphics\" />
     <Folder Include="MacOS\Media\" />
     <Folder Include="MacOS\Graphics\States\" />
     <Folder Include="MacOS\Graphics\Effect\" />

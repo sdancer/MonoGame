@@ -38,6 +38,7 @@
 // */
 // #endregion License
 // 
+
 using System;
 
 namespace Microsoft.Xna.Framework
@@ -47,10 +48,10 @@ namespace Microsoft.Xna.Framework
 #if !MONOMAC
 	internal static class XnaToOpenTK
 	{
-		
-		public static OpenTK.Matrix4 ToOpenTK(this Matrix m)
+
+        public static OpenTK.Matrix4 ToOpenTK(this Matrix m)
 		{
-			return new OpenTK.Matrix4(m.M11, m.M12, m.M13, m.M14,
+            return new OpenTK.Matrix4(m.M11, m.M12, m.M13, m.M14,
 			                          m.M21, m.M22, m.M23, m.M24,
 			                          m.M31, m.M32, m.M33, m.M34,
 			                          m.M41, m.M42, m.M43, m.M44);

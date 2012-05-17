@@ -38,8 +38,8 @@
 // */
 // #endregion License
 // 
-using System;
 
+using System;
 using OpenTK.Graphics.ES11;
 
 namespace Microsoft.Xna.Framework.Graphics

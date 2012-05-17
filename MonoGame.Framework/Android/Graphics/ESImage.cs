@@ -38,6 +38,7 @@ purpose and non-infringement.
 */
 #endregion License
 
+//
 using System;
 using Android.Graphics;
 using OpenTK.Graphics.ES11;

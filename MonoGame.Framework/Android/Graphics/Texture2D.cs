@@ -38,6 +38,7 @@ purpose and non-infringement.
 */
 #endregion License
 
+
 using System.IO;
 using System;
 using System.Drawing;
@@ -455,8 +456,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
             int framebufferId = -1;
             int renderBufferID = -1;
-            
-			if (GraphicsDevice.OpenGLESVersion == OpenTK.Graphics.GLContextVersion.Gles2_0)
+
+            if (GraphicsDevice.OpenGLESVersion == OpenTK.Graphics.GLContextVersion.Gles2_0)
             {
 				GL20.GenFramebuffers(1, ref framebufferId);
 				GL20.BindFramebuffer(ALL20.Framebuffer, framebufferId);
@@ -536,8 +537,8 @@ namespace Microsoft.Xna.Framework.Graphics
                 default:
                     throw new NotSupportedException("Texture format");
             }
-			
-			if (GraphicsDevice.OpenGLESVersion == OpenTK.Graphics.GLContextVersion.Gles2_0)
+
+            if (GraphicsDevice.OpenGLESVersion == OpenTK.Graphics.GLContextVersion.Gles2_0)
             {				
 				GL20.ReadPixels(0,0,_width, _height, ALL20.Rgba, ALL20.UnsignedByte, imageInfo);
 				GL20.FramebufferRenderbuffer(ALL20.Framebuffer, ALL20.DepthAttachment, ALL20.Renderbuffer, 0);
@@ -1078,7 +1079,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		
 		private void Apply (byte[] textureData)
 		{
-			if (GraphicsDevice.OpenGLESVersion == OpenTK.Graphics.GLContextVersion.Gles2_0)
+            if (GraphicsDevice.OpenGLESVersion == OpenTK.Graphics.GLContextVersion.Gles2_0)
             {
 						
 				var s = texture.Size;

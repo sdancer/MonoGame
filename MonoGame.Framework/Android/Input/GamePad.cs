@@ -38,6 +38,7 @@ purpose and non-infringement.
 */
 #endregion License
 
+
 using Android.Content;
 using Android.OS;
 using Android.Views;

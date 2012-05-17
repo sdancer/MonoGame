@@ -92,8 +92,8 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		{
 			switch (e.ActionMasked)
             {
-				case 1:
-                case 6:
+				case MotionEventActions.Up:
+                case MotionEventActions.PointerUp:
                     if ((TouchPanel.EnabledGestures & GestureType.DragComplete) != 0)
 					{				
 						var gs = new GestureSample(GestureType.DragComplete, AndroidGameActivity.Game.TargetElapsedTime, 
@@ -101,7 +101,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 						TouchPanel.GestureList.Enqueue(gs);
 					}
                     break;
-				case 2:
+				case MotionEventActions.Move:
 					if ((TouchPanel.EnabledGestures & GestureType.FreeDrag) != 0)
 					{				
 						var gs = new GestureSample(GestureType.FreeDrag, AndroidGameActivity.Game.TargetElapsedTime, 

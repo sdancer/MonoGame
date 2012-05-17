@@ -38,6 +38,7 @@ purpose and non-infringement.
 */
 #endregion License
 
+
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -77,7 +78,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		public ESTexture2D(byte[] data, SurfaceFormat pixelFormat, int width, int height, Size size, ALL11 filter)
         {
 
-			if (GraphicsDevice.OpenGLESVersion != OpenTK.Graphics.GLContextVersion.Gles2_0)
+            if (GraphicsDevice.OpenGLESVersion != OpenTK.Graphics.GLContextVersion.Gles2_0)
             {
 				using(Bitmap bm = Bitmap.CreateBitmap(width, height, Bitmap.Config.Argb8888))
 				{
@@ -128,8 +129,8 @@ namespace Microsoft.Xna.Framework.Graphics
 	            _format = SurfaceFormat.Color;
 	            if (imageSource.HasAlpha)
 	                _format = SurfaceFormat.Color;
-	
-				if (GraphicsDevice.OpenGLESVersion == OpenTK.Graphics.GLContextVersion.Gles2_0)
+
+                if (GraphicsDevice.OpenGLESVersion == OpenTK.Graphics.GLContextVersion.Gles2_0)
 	            {
 	                _width = imageSource.Width;
 	                _height = imageSource.Height;
@@ -148,12 +149,19 @@ namespace Microsoft.Xna.Framework.Graphics
 	                _width = (int)Math.Pow(2, Math.Min(10, Math.Ceiling(Math.Log10(imageSource.Width) / Math.Log10(2))));
 	                _height = (int)Math.Pow(2, Math.Min(10, Math.Ceiling(Math.Log10(imageSource.Height) / Math.Log10(2))));
 	            }
-	
-	            _size.Width = _width;
-	            _size.Height = _height;
+
+                if (AndroidCompatibility.UseOriginalTextureSize)
+                {
+                    _size.Width = imageSource.Width;
+                    _size.Height = imageSource.Height;
+                }else
+                {
+                    _size.Width = _width;
+                    _size.Height = _height;
+                }
 	
 	            if (GraphicsDevice.OpenGLESVersion ==
-	                OpenTK.Graphics.GLContextVersion.Gles2_0)
+                    OpenTK.Graphics.GLContextVersion.Gles2_0)
 	            {
 	                GL20.GenTextures(1, ref _name);
 	            }
@@ -191,7 +199,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		                        can.DrawBitmap(imageSource, 0, 0, null);
 		
 		                    if (GraphicsDevice.OpenGLESVersion ==
-		                        OpenTK.Graphics.GLContextVersion.Gles2_0)
+                                OpenTK.Graphics.GLContextVersion.Gles2_0)
 		                    {
 		                        GL20.BindTexture(ALL20.Texture2D, _name);
 		                        GL20.TexParameter(ALL20.Texture2D, ALL20.TextureMinFilter,

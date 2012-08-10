@@ -279,16 +279,16 @@ namespace Lidgren.Network
 			}
 		}
 
-        public IPAddress BroadcastAddress
-        {
-            get { return m_broadcastAddress; }
-            set
-            {
-                if (m_isLocked)
-                    throw new NetException(c_isLockedMessage);
-                m_broadcastAddress = value;
-            }
-        }
+        //public IPAddress BroadcastAddress
+        //{
+        //    get { return m_broadcastAddress; }
+        //    set
+        //    {
+        //        if (m_isLocked)
+        //            throw new NetException(c_isLockedMessage);
+        //        m_broadcastAddress = value;
+        //    }
+        //}
 
 		/// <summary>
 		/// Gets or sets the local port to bind to. Defaults to 0. Cannot be changed once NetPeer is initialized.

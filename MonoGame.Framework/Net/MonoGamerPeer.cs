@@ -586,7 +586,7 @@ namespace Microsoft.Xna.Framework.Net
 			}
             if (MonoGameNetworkConfiguration.Broadcast != IPAddress.None)
             {
-                config.BroadcastAddress = MonoGameNetworkConfiguration.Broadcast;
+                //config.BroadcastAddress = MonoGameNetworkConfiguration.Broadcast;
             }
 			netPeer = new NetPeer (config);
 			netPeer.Start ();

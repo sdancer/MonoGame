@@ -120,7 +120,7 @@ namespace Lidgren.Network
                 {
                     
                     // HACK for Local Networks
-                    target.Address = m_configuration.BroadcastAddress;
+                    //target.Address = m_configuration.BroadcastAddress;
                     m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
                 }
 
